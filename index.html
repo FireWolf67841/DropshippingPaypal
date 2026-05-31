@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Auto Gear</title>
     
-    <script src="https://www.paypal.com/sdk/js?client-id=AQMj3NZNRgaQ0eDIVF454zxat1tq57wg-NzUlIOwNC2U-a2AO59HCA5W16u39IoRBeb0ZZ0TvGNxoUaf&currency=USD"></script>
-    
     <style>
         :root {
             --primary: #111;
@@ -249,10 +247,32 @@
             margin-bottom: 2rem;
         }
 
-        #paypal-button-container {
-            position: relative;
-            z-index: 1;
-            min-height: 50px;
+        /* CUSTOM BIG RED BUTTON STYLING */
+        .big-red-btn {
+            background: linear-gradient(135deg, #ff0000 0%, #b30000 100%);
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #ff4d4d;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .big-red-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.6);
+            background: linear-gradient(135deg, #ff1a1a 0%, #cc0000 100%);
+        }
+
+        .big-red-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 10px rgba(255, 0, 0, 0.4);
         }
     </style>
 </head>
@@ -325,7 +345,22 @@
                             <span>$45.00</span>
                         </div>
                         
-                        <div id="paypal-button-container"></div>
+                        <form id="paypal-submit-form" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+                            <input type="hidden" name="cmd" value="_xclick">
+                            <input type="hidden" name="business" value="YOUR_PAYPAL_EMAIL@GMAIL.COM">
+                            
+                            <input type="hidden" name="item_name" value="BOHU ÖNORM Certified 4WD Series Snow Chains">
+                            <input type="hidden" name="amount" value="45.00">
+                            <input type="hidden" name="currency_code" value="USD">
+                            <input type="hidden" name="no_shipping" value="2"> <input type="hidden" name="first_name" id="pp_name" value="">
+                            <input type="hidden" name="email" id="pp_email" value="">
+                            <input type="hidden" name="address1" id="pp_address" value="">
+                            <input type="hidden" name="city" id="pp_city" value="">
+                            <input type="hidden" name="zip" id="pp_zip" value="">
+
+                            <button type="button" id="master-purchase-btn" class="big-red-btn">FINALIZE PURCHASE</button>
+                        </form>
+
                     </div>
                 </div>
             </div>
@@ -333,6 +368,7 @@
     </div>
 
     <script>
+        // Visual Tilt Physics
         const tiltContainer = document.querySelector('.tilt-container');
         const img = document.getElementById('product-img');
 
@@ -340,13 +376,10 @@
             const rect = tiltContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            
             const rotateX = ((y - centerY) / centerY) * -10; 
             const rotateY = ((x - centerX) / centerX) * 10;
-
             img.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
         });
 
@@ -355,14 +388,11 @@
             img.style.transition = 'transform 0.5s ease';
         });
 
-        tiltContainer.addEventListener('mouseenter', () => {
-            img.style.transition = 'none';
-        });
+        tiltContainer.addEventListener('mouseenter', () => { img.style.transition = 'none'; });
 
-        const checkoutBtn = document.getElementById('initiate-checkout');
-        const checkoutSection = document.getElementById('checkout-section');
-        
-        checkoutBtn.addEventListener('click', () => {
+        // Scroll to checkout
+        document.getElementById('initiate-checkout').addEventListener('click', () => {
+            const checkoutSection = document.getElementById('checkout-section');
             checkoutSection.style.display = 'block';
             setTimeout(() => {
                 checkoutSection.classList.add('visible');
@@ -370,53 +400,31 @@
             }, 10);
         });
 
-        const nameInput = document.getElementById('name');
-        const cityInput = document.getElementById('city');
-        const zipInput = document.getElementById('zip');
+        // Form Formatting Rules
+        const lettersOnly = function(e) { e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); };
+        document.getElementById('name').addEventListener('input', lettersOnly);
+        document.getElementById('city').addEventListener('input', lettersOnly);
+        document.getElementById('zip').addEventListener('input', function(e) { e.target.value = e.target.value.replace(/\D/g, ''); });
 
-        const lettersOnly = function(e) {
-            e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-        };
-        nameInput.addEventListener('input', lettersOnly);
-        cityInput.addEventListener('input', lettersOnly);
-
-        zipInput.addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\D/g, '');
-        });
-
-        // Initialize PayPal Buttons only after the window has fully loaded
-        window.addEventListener('load', function() {
-            if (typeof paypal !== 'undefined') {
-                paypal.Buttons({
-                    style: {
-                        color:  'gold',
-                        shape:  'rect',
-                        label:  'checkout',
-                        height: 50
-                    },
-                    onClick: function(data, actions) {
-                        const form = document.getElementById('checkout-form');
-                        if(!form.checkValidity()) {
-                            form.reportValidity(); 
-                            return actions.reject(); 
-                        }
-                        return actions.resolve();
-                    },
-                    createOrder: function(data, actions) {
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: { value: '45.00' },
-                                description: 'BOHU ÖNORM Certified 4WD Series Snow Chains'
-                            }]
-                        });
-                    },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            alert('Transaction completed by ' + details.payer.name.given_name + '! Proceeding to fulfillment.');
-                        });
-                    }
-                }).render('#paypal-button-container');
+        // MASTER PURCHASE BUTTON LOGIC
+        document.getElementById('master-purchase-btn').addEventListener('click', function() {
+            const checkoutForm = document.getElementById('checkout-form');
+            
+            // 1. Force the user to fill out your form first
+            if(!checkoutForm.checkValidity()) {
+                checkoutForm.reportValidity();
+                return;
             }
+
+            // 2. Secretly transfer the typed data into the hidden PayPal form
+            document.getElementById('pp_name').value = document.getElementById('name').value;
+            document.getElementById('pp_email').value = document.getElementById('email').value;
+            document.getElementById('pp_address').value = document.getElementById('address').value;
+            document.getElementById('pp_city').value = document.getElementById('city').value;
+            document.getElementById('pp_zip').value = document.getElementById('zip').value;
+
+            // 3. Launch the unblockable payment redirect
+            document.getElementById('paypal-submit-form').submit();
         });
     </script>
 </body>
